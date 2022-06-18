@@ -12,3 +12,4 @@
 *.ipynb_checkpoints
 *.bin
 *.DS_Store
+**/venv_mlops
