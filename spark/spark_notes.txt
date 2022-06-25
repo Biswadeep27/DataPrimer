@@ -55,6 +55,66 @@ Executors  have off-heap memory as well (Disks)
 f"{str(((h+(d//60))%24) + ((m + (d%60))//60))}:{str(((m + (d%60))%60))}"
 
 
+==============================
+Spark Joining strategies:
+------
+
+1. Hash Join: Hash Join is performed by first creating a Hash Table based on join_key of smaller relation and then looping over larger relation to match the hashed join_key values. Also, this is only supported for ‘=’ join. In spark, Hash Join plays a role at per node level and the strategy is used to join partitions available on the node.
+
+2. Broadcast Hash Join: In broadcast hash join, copy of one of the join relations are being sent to all the worker nodes and it saves shuffling cost. This is useful when you are joining a large relation with a smaller one. It is also known as map-side join(associating worker nodes with mappers).
+
+Spark deploys this join strategy when the size of one of the join relations is less than the threshold values(default 10 M). The spark property which defines this threshold is spark.sql.autoBroadcastJoinThreshold(configurable).
+
+Things to Note:
+
+#The broadcasted relation should fit completely into the memory of each executor as well as the driver. In Driver, because driver will start the data transfer.
+#Only supported for ‘=’ join.
+#Supported for all join types(inner, left, right) except full outer joins.
+#When the broadcast size is small, it is usually faster than other join strategies.
+#Copy of relation is broadcasted over the network. Therefore, being a network-intensive operation could cause out of memory errors or performance issues when broadcast size is big(for instance, when explicitly specified to use broadcast join/changes in the default threshold)
+#You can’t make changes to the broadcasted relation, after broadcast. Even if you do, they won’t be available to the worker nodes(because the copy is already shipped).
+
+
+3. Shuffle hash join: Shuffle Hash Join involves moving data with the same value of join key in the same executor node followed by Hash Join(explained above). Using the join condition as output key, data is shuffled amongst executor nodes and in the last step, data is combined using Hash Join, as we know data of the same key will be present in the same executor. (= joins except full outer join)
+
+4. Shuffle sort-merge join: Sort join involves, first sorting the relations based on join keys and then merging both the datasets(think of merge step of merge sort).
+
+Shuffle sort-merge join involves, shuffling of data to get the same join_key with the same worker, and then performing sort-merge join operation at the partition level in the worker nodes. (all = joins)
+
+5. Cartesian Join: In this strategy, the cartesian product(similar to SQL) of the two relations is calculated to evaluate join.
+
+6. Broadcast nested loop join : Think of this as a nested loop comparison of both the relations. As you can see, this can be a very slow strategy. This is generally, a fallback option when no other join type can be applied. Spark handles this using BroadcastNestedLoopJoinExec operator that broadcasts the appropriate side of the query, so you can think that at least some chunk of results will be broadcasted to improve performance. (all joins i.e = > < >= <=)
+
+
+How spark selects join strategy?
+--
+If it is an ‘=’ join:
+Look at the join hints, in the following order:
+1. Broadcast Hint: Pick broadcast hash join if the join type is supported.
+2. Sort merge hint: Pick sort-merge join if join keys are sortable.
+3. shuffle hash hint: Pick shuffle hash join if the join type is supported.
+4. shuffle replicate NL hint: pick cartesian product if join type is inner like.
+
+If there is no hint or the hints are not applicable
+1. Pick broadcast hash join if one side is small enough to broadcast, and the join type is supported.
+2. Pick shuffle hash join if one side is small enough to build the local hash map, and is much smaller than the other side, and spark.sql.join.preferSortMergeJoin is false.
+3. Pick sort-merge join if join keys are sortable.
+4. Pick cartesian product if join type is inner .
+5. Pick broadcast nested loop join as the final solution. It may OOM but there is no other choice.
+
+If it’s not ‘=’ join:
+Look at the join hints, in the following order:
+1. broadcast hint: pick broadcast nested loop join.
+2. shuffle replicate NL hint: pick cartesian product if join type is inner like.
+
+If there is no hint or the hints are not applicable
+1. Pick broadcast nested loop join if one side is small enough to broadcast.
+2. Pick cartesian product if join type is inner like.
+3. Pick broadcast nested loop join as the final solution. It may OOM but we don’t have any other choice.
+
+
+
+
 
 
 
