@@ -3,6 +3,8 @@
 *.jar
 *.parquet
 *.csv
+*.xls
+*xlsx
 **/ivy*
 **/__pycache__
 **/build
@@ -12,3 +14,4 @@
 *.ipynb_checkpoints
 *.bin
 *.DS_Store
+**/venv_mlops
