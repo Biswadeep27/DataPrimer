@@ -18,6 +18,8 @@ select date_part('week', timestamp '2022-06-18 20:38:40');
 
 select date_part('week', date '2022-06-18') - date_part('week', date '2022-06-09');
 
+select extract('year' from date '2022-06-18');
+
 -- for MS sqlserver - datepart('day' '<date-field>') , dateadd(interval,int increment,date field), datediff(interval,start-date,end-date)
 
 -- given date := '2022-06-15'
@@ -59,6 +61,4 @@ declare
 begin 
    perform version();
 end $$;
-
-
 
