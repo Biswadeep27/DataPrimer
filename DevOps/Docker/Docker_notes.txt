@@ -259,3 +259,7 @@ docker run -d \
 	postgres
 
 docker run -d --name pg-raj -e POSTGRES_PASSWORD=postgres -p 5432:5432 -v /Users/bupadhy/pg:/var/lib/postgresql/data postgres
+
+docker run -e "ACCEPT_EULA=Y" -e "SA_PASSWORD=yourStrong(!)Password" -p 1433:1433 -d mcr.microsoft.com/mssql/server:2022-latest
+
+docker run --name mssql-raj -e 'ACCEPT_EULA=Y' -e 'MSSQL_SA_PASSWORD=SAM@12anvey' -p 1433:1433 -v /Users/bupadhy/mssql/data:/var/opt/mssql/data -v /Users/bupadhy/mssql/log:/var/opt/mssql/log -v /Users/bupadhy/mssql/secrets:/var/opt/mssql/secrets -d mcr.microsoft.com/mssql/server:2022-latest
