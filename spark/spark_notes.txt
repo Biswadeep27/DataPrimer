@@ -148,6 +148,37 @@ spark.driver.cores - 2
 spark.default.parallelism - 18 executors * 2 core per executors = 36
 
 
+==============
+Hive Support with PySpark:
 
+hc = HiveContext(sc)
+
+hc.sql("select * from db_name.table_name limit 5").show()
+
+self.spark = SparkSession.builder.appName(self.appname).enableHiveSupport().getOrCreate()
+self.sc = self.spark.sparkContext
+self.spark.conf.set("hive.exec.dynamic.partition", "true")
+self.spark.conf.set("hive.exec.dynamic.partition.mode" , "nonstrict")
+#self.spark.conf.set("spark.sql.sources.partitionOverwriteMode", "dynamic")
+self.spark.conf.set("hive.merge.tezfiles" , "true")
+self.spark.conf.set("hive.merge.mapfiles" , "true")
+self.spark.conf.set("hive.merge.mapredfiles" , "true")
+self.spark.conf.set("hive.merge.size.per.task" , "128000000")
+self.spark.conf.set("hive.merge.smallfiles.avgsize" , "128000000")
+
+
+spark.sql("select * from db_name.table_name limit 5").show()
+
+dblist = spark.catalog._jcatalog.listDatabases()
+dblist.createOrReplaceTempView("dblist")
+spark.sql("select name from dblist where name ='dbname'").count()
+
+tbllist = self.spark.catalog._jcatalog.listTables("dbname")
+tbllist.createOrReplaceTempView("tbllist")
+self.spark.sql("select name from tbllist where name =''").count()
+
+
+df.write.saveAsTable('global_shared.test_beepz')
+spark.table('temp_table_name').write.saveAsTable('db_name.table_name')
 
 
