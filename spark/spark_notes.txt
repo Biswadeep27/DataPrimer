@@ -1,3 +1,114 @@
+Apache Spark is a fast and general-purpose cluster computing system. It provides high-level APIs in Java, Scala, Python and R, 
+and an optimized engine that supports general execution graphs. It also supports a rich set of higher-level tools including 
+Spark SQL for SQL and structured data processing, MLlib for machine learning, GraphX for graph processing, and Spark Streaming.
+
+
+Nodes in Hadoop:
+-------------------
+
+There are three kind of nodes :
+
+The masters are the nodes that host the core more-unique Hadoop roles that usually orchestrate/coordinate/oversee processes 
+and roles on the other nodes — think HDFS NameNodes (of which max there can only be 2), Hive Metastore Server (only one at the 
+time of writing this answer), YARN ResourceManager (just the one), HBase Masters, Impala StateStore and Catalog Server (one 
+of each). All master roles need not necessarily have a fixed number of instances (you can have many Zookeeper Servers) but they 
+all have associated roles within the same service that rely on them to function. A typical enterprise production cluster has 2–3 
+master nodes, scaling up as per size and services installed on the cluster.
+
+
+Contrary to this, the workers are the actual nodes doing the real work of storing data or performing compute or other operations. 
+Roles like HDFS DataNode, YARN NodeManager, HBase RegionServer, Impala Daemons etc — they need the master roles to coordinate the 
+work and total instances of each of these roles usually scale more linearly with the size of the cluster. A typical cluster has 
+about 80-90% nodes dedicated to hosting worker roles.
+
+
+Put simply, edge nodes are the nodes that are neither masters, nor workers. They usually act as gateways/connection-portals for 
+end-users to reach the worker nodes better. Roles like HiveServer2 servers, Impala LoadBalancer (Proxy server for Impala Daemons), 
+Flume agents, config files and web interfaces like HttpFS, Oozie servers, Hue servers etc — they all fall under this category. 
+Most of each of these roles can be installed on multiple nodes (assigning more nodes for each role helps prevent everybody from 
+connecting to one instance and overwhelming that node).
+
+
+The purpose of introducing edge nodes as against direct worker node access is: one — they act as network interface for the cluster 
+and outside world (you don’t want to leave the entire cluster open to the outside world when you can make do with a few nodes 
+instead. This also helps keep the network architecture costs low); two — uniform data/work distribution (users directly connecting 
+to the same set of few worker nodes won’t harness the entire cluster’s resources resulting in data skew/performance issues); and 
+three — edge nodes serve as staging space for final data (stuff like data ingest using Sqoop, Oozie workflow setup etc).
+
+
+
+Node = any physical host that belongs to your cluster
+
+
+Services = HDFS, Hive, Impala, Zookeeper etc → they are installed on nodes
+
+Now, NameNode is a role for HDFS service that must be installed on a node (or on two nodes if you need active and secondary nodes 
+to ensure availability), just like all the other Hadoop service roles need to be installed on the cluster nodes. The node on 
+which NameNode is installed then goes on to be known as the master node for the cluster. Since a cluster can have multiple master 
+nodes (all of which may not necessarily have the role NameNode running on them), therefore sometimes nodes are addressed by the 
+roles themselves to identify the right host(s) and so the master node on which the NameNode role is installed becomes known as the 
+Name Node. NameNode itself is nothing but a directory listing/tracker of HDFS data that exists on the Data Nodes i.e. nodes on 
+which HDFS DataNode role is installed. From a cluster architecture standpoint, data nodes are usually the worker nodes of the 
+cluster.
+
+
+
+
+Spark applications run as independent sets of processes on a cluster, coordinated by the SparkContext object in your main program 
+(called the driver program).
+
+Specifically, to run on a cluster, the SparkContext can connect to several types of cluster managers (either Spark’s own 
+standalone cluster manager, Mesos or YARN), which allocate resources across applications. Once connected, Spark acquires 
+executors on nodes in the cluster, which are processes that run computations and store data for your application. Next, 
+it sends your application code (defined by JAR or Python files passed to SparkContext) to the executors. Finally, SparkContext 
+sends tasks to the executors to run.
+
+
+
+sparkSession:
+The entry point into all functionality in Spark is the SparkSession class. To create a basic SparkSession, just use 
+SparkSession.builder():
+
+
+
+yarn logs -applicationId <app ID>
+
+There are two deploy modes that can be used to launch Spark applications on YARN. In cluster mode, the Spark driver runs inside 
+an application master process which is managed by YARN on the cluster, and the client can go away after initiating the application. 
+In client mode, the driver runs in the client process, and the application master is only used for requesting resources from YARN.
+
+Unlike other cluster managers supported by Spark in which the master’s address is specified in the --master parameter, in YARN 
+mode the ResourceManager’s address is picked up from the Hadoop configuration. Thus, the --master parameter is yarn.
+
+--class: The entry point for your application (e.g. org.apache.spark.examples.SparkPi)
+--master: The master URL for the cluster (e.g. spark://23.195.26.187:7077)
+--deploy-mode: Whether to deploy your driver on the worker nodes (cluster) or locally as an external client (client) 
+(default: client) †
+--conf: Arbitrary Spark configuration property in key=value format. For values that contain spaces wrap “key=value” in quotes 
+(as shown).
+application-jar: Path to a bundled jar including your application and all dependencies. The URL must be globally visible inside of 
+your cluster, for instance, an hdfs:// path or a file:// path that is present on all nodes.
+application-arguments: Arguments passed to the main method of your main class, if any
+
+
+
+† A common deployment strategy is to submit your application from a gateway machine that is physically co-located with your worker 
+machines (e.g. Master node in a standalone EC2 cluster). In this setup, client mode is appropriate. In client mode, the driver is 
+launched directly within the spark-submit process which acts as a client to the cluster. The input and output of the application 
+is attached to the console. Thus, this mode is especially suitable for applications that involve the REPL (e.g. Spark shell).
+
+
+
+Alternatively, if your application is submitted from a machine far from the worker machines (e.g. locally on your laptop), it is 
+common to use cluster mode to minimize network latency between the drivers and the executors. Currently, the standalone mode does 
+not support cluster mode for Python applications.
+
+
+
+
+
+
+
 spark : a Definitive guide:
 ===============================
 
