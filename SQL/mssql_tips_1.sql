@@ -83,6 +83,54 @@ select * FROM emp_compensation ec where upper(ec.salary_component_type) = 'SALAR
 update orders set cutomer_gender = CASE WHEN cutomer_gender = 'Male' THEN 'Female' ELSE 'MALE' END ;
 
 
+-- self join
+select e.* , m.emp_name as manager_name, m.salary as manager_salary from employee e
+join employee m
+on e.manager_id = m.emp_id 
+where e.salary > m.salary ;
+
+
+-- cross join
+create table products (
+id int,
+name varchar(10)
+);
+
+insert into products VALUES 
+(1, 'A'),
+(2, 'B'),
+(3, 'C'),
+(4, 'D'),
+(5, 'E');
+
+create table colors (
+color_id int,
+color varchar(50)
+);
+insert into colors values (1,'Blue'),(2,'Green'),(3,'Orange');
+
+create table sizes
+(
+size_id int,
+size varchar(10)
+);
+
+insert into sizes values (1,'M'),(2,'L'),(3,'XL');
+
+create table transactions
+(
+order_id int,
+product_name varchar(20),
+color varchar(10),
+size varchar(10),
+amount int
+);
+
+insert into transactions values (1,'A','Blue','L',300),(2,'B','Blue','XL',150),(3,'B','Green','L',250),(4,'C','Blue','L',250),
+(5,'E','Green','L',270),(6,'D','Orange','L',200),(7,'D','Green','M',250);
+
+
+
 
 
 
