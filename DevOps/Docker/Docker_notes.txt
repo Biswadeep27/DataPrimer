@@ -64,7 +64,7 @@ $ docker exec ubuntu cat /etc/host
 
 
 10. run - attach & detach
-by default docker runs the container on attached mode. the prompy becomes busy if the conainer has such process.
+By default docker runs the container on attached mode. the prompt becomes busy if the conainer has such process.
 in that case we can run the containers in detach mode.
 $ docker run -d ubuntu sleep 100
 
