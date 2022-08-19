@@ -345,4 +345,41 @@ new_df.write\
     .options(table="restaurent", keyspace="tabular")\
     .save()
 
+=======
+pyspark --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.1.1,org.apache.spark:spark-streaming-kafka-0-10-assembly_2.12:3.1.1 \
+--conf "spark.jars.ivy=/hadoopData/bdipoc/poc/python/beepz/kafka_jars" --files /hadoopData/daci/poc/properties/truststore.jks \
+--executor-memory 4G --driver-memory 4G --num-executors 4 --executor-cores 4
 
+=======
+presto with spark:
+-------
+config.properties -
+-
+task.concurrency=4
+task.max-worker-threads=4
+task.writer-count=4
+
+/spark/bin/spark-submit \
+--master spark://spark-master:7077 \
+--executor-cores 4 \
+--conf spark.task.cpus=4 \
+--class com.facebook.presto.spark.launcher.PrestoSparkLauncher \
+  presto-spark-launcher-0.275.jar \
+--package presto-spark-package-0.275.tar.gz \
+--config /presto/etc/config.properties \
+--catalogs /presto/etc/catalogs \
+--catalog hive \
+--schema default \
+--file query.sql
+
+----
+=====
+druid:
+
+kafka ip event(avro) -> spark streaming -> kafka op event(json) -> data load into druid
+manual offset commit while reading from kafka :
+commitAsync(offsetRanges) after each micro-rdd-batch
+
+=============
+spark structured streaming:
+------
