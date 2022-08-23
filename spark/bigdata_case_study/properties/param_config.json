@@ -1,0 +1,64 @@
+[
+    {
+        "job_indicator" : "global",
+        "project_dir" : "/hadoopData/bdipoc/poc/python/beepz/bigdata_case_study",
+        "log_dir" : "/hadoopData/bdipoc/poc/python/beepz/bigdata_case_study/logs",
+        "log_level" : "INFO",
+        "log_write_mode" : "w",
+        "ip_charges" : "/hdfsData/bdipoc/poc/inbound/casestudy_data/Charges_use.csv",
+        "ip_damages" : "/hdfsData/bdipoc/poc/inbound/casestudy_data/Damages_use.csv",
+        "ip_endorsements" : "/hdfsData/bdipoc/poc/inbound/casestudy_data/Endorse_use.csv",
+        "ip_primary_person" : "/hdfsData/bdipoc/poc/inbound/casestudy_data/Primary_Person_use.csv",
+        "ip_restrict" : "/hdfsData/bdipoc/poc/inbound/casestudy_data/Restrict_use.csv",
+        "ip_unit" : "/hdfsData/bdipoc/poc/inbound/casestudy_data/Units_use.csv"
+    },
+    {
+        "job_indicator" : "sp_analysis_1",
+        "ip_primary_person" : "/hdfsData/bdipoc/poc/inbound/casestudy_data/Primary_Person_use.csv",
+        "analysis_op_hdfs" : "/hdfsData/bdipoc/poc/outbound/casestudy_op/analysis_1/",
+        "analysis_op_nas" : "/hadoopData/bdipoc/poc/python/beepz/bigdata_case_study/analysis_op/analysis_1.csv",
+        "op_delimiter" : "|",
+        "op_header" : "true",
+        "executor-memory" : "1G",
+        "driver-memory" : "1G",
+        "num-executors" : "1",
+        "executor-cores" : "1"
+    },
+    {
+        "job_indicator" : "sp_analysis_2",
+        "ip_unit" : "/hdfsData/bdipoc/poc/inbound/casestudy_data/Units_use.csv",
+        "analysis_op_hdfs" : "/hdfsData/bdipoc/poc/outbound/casestudy_op/analysis_2/",
+        "analysis_op_nas" : "/hadoopData/bdipoc/poc/python/beepz/bigdata_case_study/analysis_op/analysis_2.csv",
+        "op_delimiter" : "|",
+        "op_header" : "true",
+        "executor-memory" : "1G",
+        "driver-memory" : "1G",
+        "num-executors" : "1",
+        "executor-cores" : "1"
+    },
+    {
+        "job_indicator" : "sp_analysis_3",
+        "ip_primary_person" : "/hdfsData/bdipoc/poc/inbound/casestudy_data/Primary_Person_use.csv",
+        "analysis_op_hdfs" : "/hdfsData/bdipoc/poc/outbound/casestudy_op/analysis_3/",
+        "analysis_op_nas" : "/hadoopData/bdipoc/poc/python/beepz/bigdata_case_study/analysis_op/analysis_3.csv",
+        "op_delimiter" : "|",
+        "op_header" : "true",
+        "executor-memory" : "1G",
+        "driver-memory" : "1G",
+        "num-executors" : "1",
+        "executor-cores" : "1"
+    },
+    {
+        "job_indicator" : "sp_analysis_4",
+        "ip_unit" : "/hdfsData/bdipoc/poc/inbound/casestudy_data/Units_use.csv",
+        "ip_primary_person" : "/hdfsData/bdipoc/poc/inbound/casestudy_data/Primary_Person_use.csv",
+        "analysis_op_hdfs" : "/hdfsData/bdipoc/poc/outbound/casestudy_op/analysis_4/",
+        "analysis_op_nas" : "/hadoopData/bdipoc/poc/python/beepz/bigdata_case_study/analysis_op/analysis_4.csv",
+        "op_delimiter" : "|",
+        "op_header" : "true",
+        "executor-memory" : "1G",
+        "driver-memory" : "1G",
+        "num-executors" : "1",
+        "executor-cores" : "1"
+    }
+]
