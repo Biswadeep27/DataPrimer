@@ -18,13 +18,13 @@ class CaseStudyException(Exception):
 
 
 def purge_log_file(dir, pattern):
-    """Purge Old Files Created by this process.
+    '''Purge Old Files Created by this process.
 
     :param: 
         dir - Provide the Directoy name where the logfile is places
         pattern - Provide the pattern of the file name to be removed.
-    :return: None - removed the files
-    """
+    :return: None - it removes the log files of the matched pattern after 7 days.
+    '''
     print(f"looking for log files with the pattern '{pattern}' older than 7 days in the dir '{dir}' for purging.")
     cnt = 0
     now = time.time()
@@ -39,6 +39,11 @@ def purge_log_file(dir, pattern):
 
 
 def get_logger(proc: str):
+    '''This function initializes the logger module for this session.
+    :param:
+        - proc : process name which will be an unique identifier for a log file.
+    :return: logging
+    '''
     if not os.path.isdir(LOG_FOLDER):
         os.mkdir(LOG_FOLDER)
     file_name = LOG_FILE + proc + '_'
@@ -52,11 +57,11 @@ def get_logger(proc: str):
     return logging
 
 
-def extract_yarn_log(cmdout):
-    """This function extracts the yarn log from cluster after spark-submit initialization for a particular session. 
+def extract_yarn_log(cmdout: str) -> bool:
+    '''This function extracts the yarn log from cluster after spark-submit initialization for a particular session. 
     :param : cmdout - collected command ouput after a spark-submit
     :return: True or False
-    """
+    '''
     try:
         yarn_application_ids = re.findall(r'application_\d{13}_\d{4}', cmdout)
         if len(yarn_application_ids):
@@ -86,11 +91,13 @@ def extract_yarn_log(cmdout):
         return False
 
 
-def spark_submit(config: str,script: str) -> bool:
-    """This function creates the spark submit command and submits the applcaition to the cluster. 
-    :param : No Input Parameter needs to be passed.
+def spark_submit(config: str, script: str) -> bool:
+    '''This function creates the spark submit command and submits the applcaition to the cluster. 
+    :param : 
+        - config : input paramter config file of type json.
+        - script : base python filemame of the pyspark script which also happens to be the jobname. 
     :return: True or False
-    """
+    '''
     pyspark_script = f"/{str(PROJECT_FOLDER).strip('/')}/python/{script}.py"
     log.info(f'The pyspark script: {pyspark_script}')
 
@@ -124,7 +131,7 @@ def spark_submit(config: str,script: str) -> bool:
 
 
 def main():
-    ##reading the command line arguments to this wrapper
+    '''The main function whhich will get executed when this wrapper will be triggered from cli'''
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--config",
