@@ -58,7 +58,7 @@ cmd_hdfs_get_nas_4 = "sh /hadoopData/bdipoc/poc/python/beepz/bigdata_case_study/
 cmd_hdfs_get_nas_5 = "sh /hadoopData/bdipoc/poc/python/beepz/bigdata_case_study/bin/hdfs_get_nas_global.sh -s /hdfsData/bdipoc/poc/outbound/casestudy_op/analysis_5/ -t /hadoopData/bdipoc/poc/python/beepz/bigdata_case_study/analysis_op/analysis_5.csv -m gh"
 cmd_hdfs_get_nas_6 = "sh /hadoopData/bdipoc/poc/python/beepz/bigdata_case_study/bin/hdfs_get_nas_global.sh -s /hdfsData/bdipoc/poc/outbound/casestudy_op/analysis_6/ -t /hadoopData/bdipoc/poc/python/beepz/bigdata_case_study/analysis_op/analysis_6.csv -m gh"
 cmd_hdfs_get_nas_7 = "sh /hadoopData/bdipoc/poc/python/beepz/bigdata_case_study/bin/hdfs_get_nas_global.sh -s /hdfsData/bdipoc/poc/outbound/casestudy_op/analysis_7/ -t /hadoopData/bdipoc/poc/python/beepz/bigdata_case_study/analysis_op/analysis_7.csv -m gh"
-cmd_hdfs_get_nas_8 = "sh /hadoopData/bdipoc/poc/python/beepz/bigdata_case_study/bin/hdfs_get_nas_global.sh -s /hdfsData/bdipoc/poc/outbound/casestudy_op/analysis_1/ -t /hadoopData/bdipoc/poc/python/beepz/bigdata_case_study/analysis_op/analysis_8.csv -m gh"
+cmd_hdfs_get_nas_8 = "sh /hadoopData/bdipoc/poc/python/beepz/bigdata_case_study/bin/hdfs_get_nas_global.sh -s /hdfsData/bdipoc/poc/outbound/casestudy_op/analysis_8/ -t /hadoopData/bdipoc/poc/python/beepz/bigdata_case_study/analysis_op/analysis_8.csv -m gh"
 
 start_op = DummyOperator(task_id='start_hdp_case_study',dag=dag)
 end_op = DummyOperator(task_id='end_hdp_case_study', dag=dag)
