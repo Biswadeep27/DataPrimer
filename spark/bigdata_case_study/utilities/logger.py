@@ -14,11 +14,13 @@ log_capture_string = ""
 logger = None
 
 def get_log_string():
+    '''It captures log strings'''
     global log_capture_string
     return log_capture_string.getvalue()
 
 
 def initialize_logger(log_dir, logLevel, proc, write_mode):
+    '''main function to initialze logger with certain customization'''
     global logger
     if logger:
         for handler in logger.handlers[:]:

@@ -44,16 +44,28 @@ except Exception as e:
         raise SparkProcessException(f'ERROR - the case_study {job_name} failed due to error while parsing config Json file: {param_conf}') from e
 
 
-print(f"INFO - The hdfs input : {attr_job['ip_unit']}")
+print(f"INFO - The hdfs input units : {attr_job['ip_unit']}")
+print(f"INFO - The hdfs input charges : {attr_job['ip_charges']}")
 
 try:
     unit_df = spark.read.csv(attr_job['ip_unit'], header = True)
 except Exception as e:
-    print(f'ERROR - Spark read failed with the error : {e}')
+    print(f'ERROR - Spark read for unit file failed with the error : {e}')
+    raise SparkProcessException('Spark process failed.') from e
+
+try:
+    charge_df = spark.read.csv(attr_job['ip_charges'], header = True)
+except Exception as e:
+    print(f'ERROR - Spark read for unit file failed with the error : {e}')
     raise SparkProcessException('Spark process failed.') from e
 
 #business logic
-two_wheeler_df = unit_df[F.col('VEH_BODY_STYL_ID') == 'MOTORCYCLE']\
+two_wheeler_df = unit_df[F.col('VEH_BODY_STYL_ID') == 'MOTORCYCLE'].alias('unit')\
+    .join(charge_df.alias('charge'), \
+    (F.col('unit.CRASH_ID') == F.col('charge.CRASH_ID')) & \
+    (F.col('unit.UNIT_NBR') == F.col('charge.UNIT_NBR')), \
+    'inner')\
+    .select(F.col('unit.CRASH_ID'),F.col('unit.UNIT_NBR'))\
     .groupBy('CRASH_ID','UNIT_NBR').count()\
     .selectExpr("count(*) as booked_count")\
     .withColumn('description',F.lit("Number of two wheelers booked"))\

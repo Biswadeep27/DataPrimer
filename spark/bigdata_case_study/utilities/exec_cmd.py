@@ -9,6 +9,33 @@ from subprocess import Popen, PIPE
 log = logging.getLogger(__name__)
 
 class ExecuteCmd(object):
+    '''
+    A class to execute shell commands from within python file
+    ...
+    Attributes
+    ----------
+    cmd (str): the shell command to execute
+    error (str): Standard error
+    output (str): Standarad output
+    returncode (int) : return code of any shell command execution
+    cmd_desc (str) : command description
+
+    Methods
+    -------
+    
+    execute():
+        executes the shell command.
+    
+    getcommandoutput():
+        captures the standard output and returns it.
+
+    getcommanderror():
+        captures the standard error and returns it.
+
+    getreturncode():
+        captured the return code of a command execution and returns it.
+
+    '''
     def __init__(self, cmd, cmd_desc=''):
         self.cmd = cmd
         self.error = ''

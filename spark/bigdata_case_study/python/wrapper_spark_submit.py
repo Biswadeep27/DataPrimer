@@ -1,3 +1,12 @@
+###########################################################################
+#Global Name: wrapper_spark_submit.py                                     #
+#Description: generic script which will create spark submit based on user #
+#             input and executes the spark submit                         #
+#usage      : python3 wrapper_spark_submit.py --config <param-file> --job #
+#             <job-name>                                                  #
+#Scope :      Generic Utility - Global                                    #
+#Author:      Biswadeep Upadhyay                                          #
+###########################################################################
 import os
 import re
 import sys
@@ -23,14 +32,14 @@ def purge_log_file(dir, pattern):
     :param: 
         dir - Provide the Directoy name where the logfile is places
         pattern - Provide the pattern of the file name to be removed.
-    :return: None - it removes the log files of the matched pattern after 7 days.
+    :return: None - it removes the log files of the matched pattern after LOG_PURGE_INTERVAL days.
     '''
-    print(f"looking for log files with the pattern '{pattern}' older than 7 days in the dir '{dir}' for purging.")
+    print(f"looking for log files with the pattern '{pattern}' older than {LOG_PURGE_INTERVAL} days in the dir '{dir}' for purging.")
     cnt = 0
     now = time.time()
     for f in os.listdir(dir):
         f = os.path.join(dir, f)
-        if re.search(pattern, f) and os.stat(f).st_mtime < now - 7 * 86400:
+        if re.search(pattern, f) and os.stat(f).st_mtime < now - LOG_PURGE_INTERVAL * 86400:
             cnt += 1
             print(f"Housekeeping of old log files - Removing : {f}")
             os.remove(f)
@@ -167,12 +176,14 @@ def main():
     except Exception as e:
         raise CaseStudyException(f'the case_study {v_job_indicator} failed due to error while parsing config Json file: {v_param_config}') from e
 
-    global PROJECT_FOLDER, LOG_FOLDER, LOG_LEVEL, WRITE_MODE, LOG_FILE, log
+    global PROJECT_FOLDER, LOG_FOLDER, LOG_LEVEL, WRITE_MODE, LOG_FILE, LOG_PURGE_INTERVAL, log
     PROJECT_FOLDER = attr_global['project_dir']
     LOG_FOLDER = attr_global['log_dir']
     LOG_LEVEL = getattr(logging,attr_global['log_level'])
     WRITE_MODE = attr_global['log_write_mode']
     LOG_FILE = 'case_study_'
+    LOG_PURGE_INTERVAL = int(attr_global['log_purge_interval'])
+    
 
     log = get_logger(v_job_indicator)
     log.info(f'Welcome to spark case study job : {v_job_indicator}.')
@@ -202,6 +213,7 @@ if __name__ == '__main__':
     #customizing print statement
     old_print = print
     def timestamped_print(*args, **kwargs):
+        '''to add timestamp and description to each print statement'''
         logTime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         printheader = logTime + " " + "wrapper SPARK - "
         old_print(printheader, *args, **kwargs)
