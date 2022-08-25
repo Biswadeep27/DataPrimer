@@ -28,7 +28,9 @@ if __name__ == "__main__":
 
     spark = SparkSession\
         .builder\
-        .appName("StructuredNetworkWordCount")\
+        .appName("spark streaming socket 1")\
+        .config('spark.streaming.stopGracefullyOnShutdown','true')\
+        .config('spark.sql.shuffle.partitons', 3)\
         .getOrCreate()
 
     # Create DataFrame representing the stream of input lines from connection to host:port
@@ -55,6 +57,7 @@ if __name__ == "__main__":
         .writeStream\
         .outputMode('complete')\
         .format('console')\
+        .option('checkpointLocation','path/to/checkpoint/dir')\
         .start()
 
     query.awaitTermination()

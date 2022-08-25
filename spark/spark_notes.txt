@@ -292,4 +292,94 @@ self.spark.sql("select name from tbllist where name =''").count()
 df.write.saveAsTable('global_shared.test_beepz')
 spark.table('temp_table_name').write.saveAsTable('db_name.table_name')
 
+=======
+to check the partition row count
+from pyspark.sql.functions import spark_partition_id, asc, desc
+df\
+    .withColumn("partitionId", spark_partition_id())\
+    .groupBy("partitionId")\
+    .count()\
+    .orderBy(asc("count"))\
+    .show()
+=====
 
+For pyspark, you have to access the hidden _jdf and jSparkSession variables, since the Python objects do not expose the needed attributes directly... 
+df.cache().foreach(lambda x: x) 
+catalyst_plan = df._jdf.queryExecution().logical() 
+spark._jsparkSession.sessionState().executePlan(catalyst_plan).optimizedPlan().stats().sizeInBytes()
+
+====
+to write into parquet
+spark.write.parquet('hdfs')
+
+parquet-tools cat --json  hdfs://localhost/tmp/save/part-r-00000-6a3ccfae-5eb9-4a88-8ce8-b11b2644d5de.gz.parquet
+parquet-tools csv input.gz.parquet | csvq -f json "select id, description" 
+
+parquet-cli
+=====================
+cassandra integration with pyspark
+-------
+pyspark --packages com.datastax.spark:spark-cassandra-connector_2.12:3.2.0 \
+  --jars /hadoopData/bdipoc/poc/python/beepz/cassandra_connect/joda-time-2.1.jar \
+  --conf spark.sql.extensions=com.datastax.spark.connector.CassandraSparkExtensions \
+  --conf spark.jars.ivy=/hadoopData/bdipoc/poc/python/beepz/cassandra_jars \
+  --conf spark.files=/hadoopData/bdipoc/poc/python/beepz/cassandra_connect/secure-connect-fcc-tutorial.zip \
+  --conf spark.cassandra.connection.config.cloud.path=secure-connect-fcc-tutorial.zip \
+  --conf spark.cassandra.auth.username="uTaRSyTMKLOGhMiKZoCrzZoL" \
+  --conf spark.cassandra.auth.password="iA5-sxJn,B,YSBky6-1,2-jZLLLXC6fevNd9XGyI1htg-lAwPLRO7bZ,PoxIeLIl0-G7mgnjJG_Sn_hrzH5A_jn+l9xPRpKDkRJ2gx+t3C4wtDmuZ1CIZ36bBgWkjcZ3" \
+  --conf spark.dse.continuousPagingEnabled=false
+
+read:
+=======
+df = spark.read\
+    .format("org.apache.spark.sql.cassandra")\
+    .options(table="restaurent", keyspace="tabular")\
+    .load()
+
+
+write:
+=======
+new_df.write\
+    .format("org.apache.spark.sql.cassandra")\
+    .mode('append')\
+    .options(table="restaurent", keyspace="tabular")\
+    .save()
+
+=======
+pyspark --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.1.1,org.apache.spark:spark-streaming-kafka-0-10-assembly_2.12:3.1.1 \
+--conf "spark.jars.ivy=/hadoopData/bdipoc/poc/python/beepz/kafka_jars" --files /hadoopData/daci/poc/properties/truststore.jks \
+--executor-memory 4G --driver-memory 4G --num-executors 4 --executor-cores 4
+
+=======
+presto with spark:
+-------
+config.properties -
+-
+task.concurrency=4
+task.max-worker-threads=4
+task.writer-count=4
+
+/spark/bin/spark-submit \
+--master spark://spark-master:7077 \
+--executor-cores 4 \
+--conf spark.task.cpus=4 \
+--class com.facebook.presto.spark.launcher.PrestoSparkLauncher \
+  presto-spark-launcher-0.275.jar \
+--package presto-spark-package-0.275.tar.gz \
+--config /presto/etc/config.properties \
+--catalogs /presto/etc/catalogs \
+--catalog hive \
+--schema default \
+--file query.sql
+
+----
+=====
+druid:
+
+kafka ip event(avro) -> spark streaming -> kafka op event(json) -> data load into druid
+manual offset commit while reading from kafka :
+commitAsync(offsetRanges) after each micro-rdd-batch
+
+=============
+spark structured streaming:
+------
