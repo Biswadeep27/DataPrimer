@@ -292,6 +292,11 @@ self.spark.sql("select name from tbllist where name =''").count()
 df.write.saveAsTable('global_shared.test_beepz')
 spark.table('temp_table_name').write.saveAsTable('db_name.table_name')
 
+
+
+
+
+
 =======
 to check the partition row count
 from pyspark.sql.functions import spark_partition_id, asc, desc
