@@ -11,6 +11,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score
 
 
+##sync
 ## parameters
 C=1.0
 n_splits = 5
