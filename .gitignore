@@ -16,6 +16,7 @@
 *.bin
 *.DS_Store
 **/venv_mlops
+*.env
 
 #docker-compose
 **/project.lock.json
