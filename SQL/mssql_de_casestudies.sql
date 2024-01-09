@@ -772,11 +772,315 @@ insert into rental_amenities values
 
 SELECT * from rental_amenities ra 
 
-SELECT *,
-dense_rank()
+with amenity_idx as (
+SELECT rental_id ,
+dense_rank() over(order by amenity) as idx
+from rental_amenities ra ),
+total_amenities as (
+select rental_id, sum(idx) as total_idx
+from amenity_idx group by rental_id )
+select a1.rental_id,a2.rental_id
+from total_amenities a1
+join total_amenities a2
+on a1.rental_id < a2.rental_id and 
+a1.total_idx = a2.total_idx
 
 
 
+-- write a query to provide the date for nth occurance of sunday in future from given date
+
+declare @today_date date;
+declare @n int;
+set @today_date = '2022-01-01';
+set @n = 3;
+
+select dateadd(week, @n - 1, dateadd(day, 8 - datepart(weekday, @today_date), @today_date))
+
+
+-- Pareto Principle (80/20 rule)
+select * from orders o 
+
+with sales_details as (
+SELECT Product_ID , sum(sales) as prod_sales,
+sum(sum(sales)) over(order by sum(sales) desc) as rolling_prod_sum,
+0.8 * sum(sum(sales)) over() as total_sales
+from orders o
+group by Product_ID )
+select * from sales_details where rolling_prod_sum <= total_sales
+
+-- trips and users
+Create table  Trips (id int, client_id int, driver_id int, city_id int, status varchar(50), request_at varchar(50));
+Create table Users (users_id int, banned varchar(50), role varchar(50));
+
+Truncate table Trips;
+insert into Trips (id, client_id, driver_id, city_id, status, request_at) values ('1', '1', '10', '1', 'completed', '2013-10-01');
+insert into Trips (id, client_id, driver_id, city_id, status, request_at) values ('2', '2', '11', '1', 'cancelled_by_driver', '2013-10-01');
+insert into Trips (id, client_id, driver_id, city_id, status, request_at) values ('3', '3', '12', '6', 'completed', '2013-10-01');
+insert into Trips (id, client_id, driver_id, city_id, status, request_at) values ('4', '4', '13', '6', 'cancelled_by_client', '2013-10-01');
+insert into Trips (id, client_id, driver_id, city_id, status, request_at) values ('5', '1', '10', '1', 'completed', '2013-10-02');
+insert into Trips (id, client_id, driver_id, city_id, status, request_at) values ('6', '2', '11', '6', 'completed', '2013-10-02');
+insert into Trips (id, client_id, driver_id, city_id, status, request_at) values ('7', '3', '12', '6', 'completed', '2013-10-02');
+insert into Trips (id, client_id, driver_id, city_id, status, request_at) values ('8', '2', '12', '12', 'completed', '2013-10-03');
+insert into Trips (id, client_id, driver_id, city_id, status, request_at) values ('9', '3', '10', '12', 'completed', '2013-10-03');
+insert into Trips (id, client_id, driver_id, city_id, status, request_at) values ('10', '4', '13', '12', 'cancelled_by_driver', '2013-10-03');
+Truncate table Users;
+insert into Users (users_id, banned, role) values ('1', 'No', 'client');
+insert into Users (users_id, banned, role) values ('2', 'Yes', 'client');
+insert into Users (users_id, banned, role) values ('3', 'No', 'client');
+insert into Users (users_id, banned, role) values ('4', 'No', 'client');
+insert into Users (users_id, banned, role) values ('10', 'No', 'driver');
+insert into Users (users_id, banned, role) values ('11', 'No', 'driver');
+insert into Users (users_id, banned, role) values ('12', 'No', 'driver');
+insert into Users (users_id, banned, role) values ('13', 'No', 'driver');
+
+select * from Trips t 
+select * from Users u 
+
+
+select 
+request_at,
+sum(1) total_trips,
+sum(case when status = 'completed' then 0 else 1 end) as cancelled_trips,
+100 * sum(case when status = 'completed' then 0 else 1 end) / sum(1) as cancellation_rate
+from trips 
+where client_id not in (select users_id from users where banned = 'Yes' and role = 'client')
+and driver_id not in (select users_id from users where banned = 'Yes' and role = 'driver')
+group by request_at
+--and request_at between '2013-10-1' and '2013-10-03'
+
+
+-- find total number of clocked hours:
+create table clocked_hours(
+empd_id int,
+swipe time,
+flag char
+);
+
+insert into clocked_hours values
+(11114,'08:30','I'),
+(11114,'10:30','O'),
+(11114,'11:30','I'),
+(11114,'15:30','O'),
+(11115,'09:30','I'),
+(11115,'17:30','O');
+
+select * from clocked_hours ch 
+
+with swipes as (
+select *,
+first_value(swipe) over(partition by empd_id order by swipe rows BETWEEN 1 FOLLOWING and 1 FOLLOWING) as next_swipe
+from clocked_hours ch )
+select empd_id ,
+sum(case when flag = 'I' then datediff(hour, swipe, next_swipe) else 0 end) as clocked_hour
+from swipes
+group by empd_id 
+
+-- aggr events
+create table tasks (
+date_value date,
+state varchar(10)
+);
+
+insert into tasks  values ('2019-01-01','success'),('2019-01-02','success'),('2019-01-03','success'),('2019-01-04','fail')
+,('2019-01-05','fail'),('2019-01-06','success')
+
+with events as (
+select *, 
+first_value(state) over(order by date_value rows between 1 preceding and 1 preceding) as next_state
+from tasks),
+event_changes as (
+select *,
+sum(case when state != next_state then 1 else 0 end) over(order by date_value) as event_chnage_flg
+from events)
+select min(date_value) as start_date,
+max(date_value) as end_date,
+min(state) as state from event_changes
+group by event_chnage_flg
+
+with all_dates as
+(
+select *,
+row_number() over(partition by state order by date_value) as rn,
+DATEADD(day, -1*row_number() over(partition by state order by date_value), date_value) as group_date
+from tasks
+)
+select min(date_value) as start_date,
+max(date_value) as end_date,
+state
+from all_dates
+group by group_date, state 
+order by start_date
+
+
+
+
+/* User purchase platform.
+-- The table logs the spendings history of users that make purchases from an online shopping website which has a desktop 
+and a mobile application.
+-- Write an SQL query to find the total number of users and the total amount spent using mobile only, desktop only 
+and both mobile and desktop together for each date.
+*/
+
+create table spending 
+(
+user_id int,
+spend_date date,
+platform varchar(10),
+amount int
+);
+
+insert into spending values(1,'2019-07-01','mobile',100),(1,'2019-07-01','desktop',100),(2,'2019-07-01','mobile',100)
+,(2,'2019-07-02','mobile',100),(3,'2019-07-01','desktop',100),(3,'2019-07-02','desktop',100);
+
+
+select * from spending
+order by spend_date
+
+with all_spending as (
+select spend_date, user_id,
+max(platform) as platform,
+sum(amount) as amount
+from spending
+group by spend_date, user_id having count(distinct platform) = 1
+union ALL 
+select spend_date, user_id,
+'both' as platform,
+sum(amount) as amount
+from spending
+group by spend_date, user_id having count(distinct platform) = 2
+UNION all
+select spend_date, null as user_id, 'both' as platform, 0 as amount
+from spending group by spend_date
+)
+select spend_date, platform,
+count(user_id) as num_users,
+sum(amount) as total_amount
+from all_spending
+group by spend_date, platform
+order by spend_date
+
+
+
+-- total sales by year - using recursive CTE
+
+SELECT * from sales s 
+
+
+
+
+with dates as (
+select min(period_start) as date_seq, max(period_end) as max_date from
+sales
+union all
+select DATEADD(day,1, date_seq) as date_seq, max_date from dates
+where date_seq < max_date
+)
+
+select product_id, DATEPART(year, d.date_seq) as sale_year, sum(average_daily_sales) as total_sales 
+from sales s
+join dates d
+on d.date_seq between s.period_start and s.period_end 
+group by product_id, DATEPART(year, d.date_seq)
+order by product_id, sale_year
+option(maxrecursion 1000);
+
+
+
+-- recommendation - product pairs most commonly purchased together
+
+create table orders1
+(
+order_id int,
+customer_id int,
+product_id int,
+);
+
+insert into orders1 VALUES 
+(1, 1, 1),
+(1, 1, 2),
+(1, 1, 3),
+(2, 2, 1),
+(2, 2, 2),
+(2, 2, 4),
+(3, 1, 5);
+
+create table products (
+id int,
+name varchar(10)
+);
+insert into products VALUES 
+(1, 'A'),
+(2, 'B'),
+(3, 'C'),
+(4, 'D'),
+(5, 'E');
+
+
+SELECT * from orders1 o ;
+
+with product_trx as (
+select o.order_id,
+p.name
+from orders1 o 
+join
+products p 
+on o.product_id = p.id 
+)
+select concat(t1.name, ' ', t2.name) as prod_pair,
+count(*) as purchase_freq
+from product_trx t1
+join product_trx t2
+on t1.order_id = t2.order_id
+and t1.name < t2.name
+group by concat(t1.name, ' ', t2.name)
+
+
+-- prime subscription rate by product action
+
+create table users1
+(
+user_id integer,
+name varchar(20),
+join_date date
+);
+insert into users1
+values (1, 'Jon', CAST('2-14-20' AS date)), 
+(2, 'Jane', CAST('2-14-20' AS date)), 
+(3, 'Jill', CAST('2-15-20' AS date)), 
+(4, 'Josh', CAST('2-15-20' AS date)), 
+(5, 'Jean', CAST('2-16-20' AS date)), 
+(6, 'Justin', CAST('2-17-20' AS date)),
+(7, 'Jeremy', CAST('2-18-20' AS date));
+
+create table events
+(
+user_id integer,
+type varchar(10),
+access_date date
+);
+
+insert into events values
+(1, 'Pay', CAST('3-1-20' AS date)), 
+(2, 'Music', CAST('3-2-20' AS date)), 
+(2, 'P', CAST('3-12-20' AS date)),
+(3, 'Music', CAST('3-15-20' AS date)), 
+(4, 'Music', CAST('3-15-20' AS date)), 
+(1, 'P', CAST('3-16-20' AS date)), 
+(3, 'P', CAST('3-22-20' AS date));
+
+select * from users1 u ;
+select * from events e ;
+
+select 
+--u.*,e.*
+count(distinct u.user_id) as total_count,
+count(distinct case when datediff(day, join_date, access_date)<= 30 then u.user_id end) as prime_users
+from users1 u 
+left join events e 
+on u.user_id = e.user_id and type = 'P'
+where u.user_id in (
+select user_id from events e2 where TYPE = 'Music'
+)
 
 
 
