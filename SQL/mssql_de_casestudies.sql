@@ -1084,3 +1084,286 @@ select user_id from events e2 where TYPE = 'Music'
 
 
 
+---
+CREATE TABLE [emp1](
+ [emp_id] [int] NULL,
+ [emp_name] [varchar](50) NULL,
+ [salary] [int] NULL,
+ [manager_id] [int] NULL,
+ [emp_age] [int] NULL,
+ [dep_id] [int] NULL,
+ [dep_name] [varchar](20) NULL,
+ [gender] [varchar](10) NULL
+) ;
+insert into emp1 values(1,'Ankit',14300,4,39,100,'Analytics','Female')
+insert into emp1 values(2,'Mohit',14000,5,48,200,'IT','Male')
+insert into emp1 values(3,'Vikas',12100,4,37,100,'Analytics','Female')
+insert into emp1 values(4,'Rohit',7260,2,16,100,'Analytics','Female')
+insert into emp1 values(5,'Mudit',15000,6,55,200,'IT','Male')
+insert into emp1 values(6,'Agam',15600,2,14,200,'IT','Male')
+insert into emp1 values(7,'Sanjay',12000,2,13,200,'IT','Male')
+insert into emp1 values(8,'Ashish',7200,2,12,200,'IT','Male')
+insert into emp1 values(9,'Mukesh',7000,6,51,300,'HR','Male')
+insert into emp1 values(10,'Rakesh',8000,6,50,300,'HR','Male')
+insert into emp1 values(11,'Akhil',4000,1,31,500,'Ops','Male')
+
+with cte as (
+select *,
+rank() over(partition by dep_id order by salary desc) as rnk,
+count(1) over(partition by dep_id) as cnt
+from
+emp1)
+select * from cte
+where rnk = 3 or (cnt < 3 and cnt = rnk)
+
+
+--
+create table business_city (
+business_date date,
+city_id int
+);
+delete from business_city;
+insert into business_city
+values(cast('2020-01-02' as date),3),(cast('2020-07-01' as date),7),(cast('2021-01-01' as date),3),(cast('2021-02-03' as date),19)
+,(cast('2022-12-01' as date),3),(cast('2022-12-15' as date),3),(cast('2022-02-28' as date),12);
+
+with cte as (
+select DATEPART(year, business_date) as b_year, city_id  from business_city b1)
+select c2.b_year, count(distinct case when c1.city_id is null then c2.city_id end) as num_new_cities
+from cte c1
+right join cte c2 
+on c1.b_year < c2.b_year and c1.city_id = c2.city_id
+group by c2.b_year
+
+
+select b_year, count(*) as cnt from (
+select min(datepart(year, business_date)) as b_year, city_id
+from business_city bc 
+group by city_id ) x
+group by b_year
+
+
+-- consecutive empty seats
+create table movie(
+seat varchar(50),occupancy int
+);
+insert into movie values('a1',1),('a2',1),('a3',0),('a4',0),('a5',0),('a6',0),('a7',1),('a8',1),('a9',0),('a10',0),
+('b1',0),('b2',0),('b3',0),('b4',1),('b5',1),('b6',1),('b7',1),('b8',0),('b9',0),('b10',0),
+('c1',0),('c2',1),('c3',0),('c4',1),('c5',1),('c6',0),('c7',1),('c8',0),('c9',0),('c10',1);
+
+select * from movie
+
+with all_seats as (
+select seat,
+occupancy,
+SUBSTRING(seat,1,1) as row_id,
+cast(substring(seat,2,len(seat) - 1) as int) as seat_id,
+sum(occupancy) over(partition by SUBSTRING(seat,1,1) order by cast(substring(seat,2,len(seat) - 1) as int) rows between current row and 3 following) as is_four_conse_empty,
+count(occupancy) over(partition by SUBSTRING(seat,1,1) order by cast(substring(seat,2,len(seat) - 1) as int) rows between current row and 3 following) as is_four_seats
+from movie ),
+empty_seats as (
+select * from all_seats
+where is_four_conse_empty = 0 and is_four_seats = 4)
+select c1.* from
+all_seats c1
+join empty_seats c2
+on c1.row_id = c2.row_id
+and c1.seat_id between c2.seat_id and c2.seat_id + 3
+
+-- phone numbers with incoming and outgoing facilities
+create table call_details  (
+call_type varchar(10),
+call_number varchar(12),
+call_duration int
+);
+
+insert into call_details
+values ('OUT','181868',13),('OUT','2159010',8)
+,('OUT','2159010',178),('SMS','4153810',1),('OUT','2159010',152),('OUT','9140152',18),('SMS','4162672',1)
+,('SMS','9168204',1),('OUT','9168204',576),('INC','2159010',5),('INC','2159010',4),('SMS','2159010',1)
+,('SMS','4535614',1),('OUT','181868',20),('INC','181868',54),('INC','218748',20),('INC','2159010',9)
+,('INC','197432',66),('SMS','2159010',1),('SMS','4535614',1);
+
+select * from call_details;
+
+select 
+call_number,
+sum(case when call_type = 'INC' then call_duration else 0 end) as total_inc_hrs,
+sum(case when call_type = 'OUT' then call_duration else 0 end) as total_out_hrs,
+count(distinct call_type) as type_cnt
+from call_details cd 
+where call_type in ('INC','OUT')
+group by call_number 
+having count(distinct call_type) = 2
+and sum(case when call_type = 'OUT' then call_duration else 0 end) >= sum(case when call_type = 'INC' then call_duration else 0 end)
+
+--
+create table brands 
+(
+category varchar(20),
+brand_name varchar(20)
+);
+insert into brands values
+('chocolates','5-star')
+,(null,'dairy milk')
+,(null,'perk')
+,(null,'eclair')
+,('Biscuits','britannia')
+,(null,'good day')
+,(null,'boost');
+
+with cte1 as (
+select *,
+row_number() over(order by (select null)) as row_id
+from brands b ),
+cte2 as (
+select * ,
+first_value(row_id) over(order by row_id rows between 1 FOLLOWING and 1 FOLLOWING) as next_row_id
+from cte1 where category is not null)
+select c2.category, c1.brand_name from cte1 c1
+inner join cte2 c2
+on c1.row_id >= c2.row_id and (c1.row_id < c2.next_row_id or c2.next_row_id is null)
+
+--
+
+create table students1
+(
+student_id int,
+student_name varchar(20)
+);
+insert into students1 values
+(1,'Daniel'),(2,'Jade'),(3,'Stella'),(4,'Jonathan'),(5,'Will');
+
+create table exams
+(
+exam_id int,
+student_id int,
+score int);
+
+insert into exams values
+(10,1,70),(10,2,80),(10,3,90),(20,1,80),(30,1,70),(30,3,80),(30,4,90),(40,1,60)
+,(40,2,70),(40,4,80);
+
+
+select * from students1 s 
+select * from exams e 
+
+with cte1 as (
+select *,
+max(score) over(partition by exam_id) as max_score,
+min(score) over(partition by exam_id) as min_score
+from exams e )
+select c.student_id,
+s.student_name 
+from cte1 c
+join students1 s
+on c.student_id =  s.student_id 
+group by c.student_id, s.student_name having max(case when c.score = c.max_score or c.score = c.min_score then 1 else 0 end) = 0
+
+--
+create table phonelog(
+    Callerid int, 
+    Recipientid int,
+    Datecalled datetime
+);
+
+insert into phonelog(Callerid, Recipientid, Datecalled)
+values(1, 2, '2019-01-01 09:00:00.000'),
+       (1, 3, '2019-01-01 17:00:00.000'),
+       (1, 4, '2019-01-01 23:00:00.000'),
+       (2, 5, '2019-07-05 09:00:00.000'),
+       (2, 3, '2019-07-05 17:00:00.000'),
+       (2, 3, '2019-07-05 17:20:00.000'),
+       (2, 5, '2019-07-05 23:00:00.000'),
+       (2, 3, '2019-08-01 09:00:00.000'),
+       (2, 3, '2019-08-01 17:00:00.000'),
+       (2, 5, '2019-08-01 19:30:00.000'),
+       (2, 4, '2019-08-02 09:00:00.000'),
+       (2, 5, '2019-08-02 10:00:00.000'),
+       (2, 5, '2019-08-02 10:45:00.000'),
+       (2, 4, '2019-08-02 11:00:00.000');
+      
+
+with cte as (
+select *,
+CONVERT(date, Datecalled) as date_called,
+first_value(Recipientid) over(partition by Callerid, CONVERT(date, Datecalled) order by Datecalled) as first_receipt,
+first_value(Recipientid) over(partition by Callerid, CONVERT(date, Datecalled) order by Datecalled desc) as last_receipt
+from phonelog p)
+
+select callerid, date_called, min(first_receipt) as receipt_id
+from cte where first_receipt = last_receipt
+group by callerid, date_called
+
+
+--
+
+create table candidates1 (
+emp_id int,
+experience varchar(20),
+salary int
+);
+delete from candidates1;
+insert into candidates1 values
+(1,'Junior',10000),(2,'Junior',15000),(3,'Junior',40000),(4,'Senior',16000),(5,'Senior',20000),(6,'Senior',50000);
+
+with seniors as (
+select c.*,
+sum(salary) over(order by salary) as budget_spent
+from candidates1 c 
+where experience = 'Senior'),
+seniors_selected as (
+select * from seniors where budget_spent < 75000),
+juniors as (
+select c.*,
+sum(salary) over(order by salary) as budget_spent
+from candidates1 c 
+where experience = 'Junior')
+select * from seniors_selected
+union
+select * from juniors where budget_spent <= (
+select 75000 - max(budget_spent) from  seniors_selected 
+)
+
+
+with budgets as (
+select *,
+sum(salary) over(partition by experience order by salary rows between unbounded preceding and current row) as budget_needed
+from candidates1 c )
+,seniors as (
+select * from budgets 
+where experience = 'Senior' and budget_needed <= 70000)
+select * from seniors
+union
+select * from budgets 
+where experience = 'Junior' and budget_needed <= 70000 - (select max(budget_needed) from seniors)
+
+--
+select 
+e1.emp_id , e1.emp_name , e2.emp_name as manager, e3.emp_name  as sr_manager
+from emp e1 
+join emp e2
+on e1.manager_id = e2.emp_id 
+join emp e3
+on e2.manager_id = e3.emp_id 
+
+
+create table brands2 (
+price_year int,
+name varchar(20),
+price int
+);
+delete from brands2;
+insert into brands2 values
+(2018,'Visa',100),(2019,'Visa',110),(2020,'Visa',120),(2018,'Amex',100),(2019,'Amex',120),(2020,'Amex',110),(2018,'MC',100),(2019,'MC',100),(2020,'MC',110);
+
+
+select * from brands2 b 
+
+with cte as (
+select *, first_value(price) over(partition by name order by price_year rows between 1 PRECEDING and 1 PRECEDING) as prev_price
+from brands2)
+select * from (
+select count(case when price > prev_price then 1 end) as cond_count , count(*) - 1 as total_cnt, name from cte group by name) x
+where cond_count = total_cnt
+
