@@ -1367,3 +1367,80 @@ select * from (
 select count(case when price > prev_price then 1 end) as cond_count , count(*) - 1 as total_cnt, name from cte group by name) x
 where cond_count = total_cnt
 
+
+--100daysofSQL
+--Q5
+with credit_details as (select 
+c.customer_id,
+c.credit_limit,
+count(t.loan_bill_id) as total_bills_and_loans,
+sum(case when t.transaction_date <= coalesce(l.loan_due_date,b.bill_due_date)
+    then 1 else 0 end) as on_time_loan_or_bill_payment,
+sum(case when t.transaction_type = 'payment' then b.balance_amount end) credit_card_balances
+from customer_transactions t
+left join credit_card_bills b
+on t.loan_bill_id = b.bill_id
+left join loans l
+on t.loan_bill_id = l.loan_id
+inner join customers c
+on c.customer_id = coalesce(l.customer_id, b.customer_id)
+group by c.customer_id, c.credit_limit)
+select customer_id, 
+70.0 * (on_time_loan_or_bill_payment * 1.0 /total_bills_and_loans) + 
+30.0 * (case when  credit_card_balances * 1.0 /credit_limit < 0.3 then 1.0
+    when  credit_card_balances * 1.0 /credit_limit >= 0.3 and credit_card_balances * 1.0 /credit_limit <= 0.5 then 0.7
+    else 0.5 end) as cibil_score
+from credit_details
+
+--100daysofSQL
+--Q6
+
+with cte as (
+select emp_id, 
+sum(JulianDay(logout) * 24 -  JulianDay(login) * 24 > 8) as more_than_8,
+sum(JulianDay(logout) * 24 -  JulianDay(login) * 24 > 10) as more_than_10
+from employees
+group by emp_id)
+select emp_id,
+case when more_than_8 >= 3 
+    then
+        case when more_than_10 >= 2
+            then "both" else "1" end
+    else 
+        case when more_than_10 >= 2
+            then "2" else "None" end
+    end as criterian
+from cte
+
+
+--100daysofSQL
+--Q7
+
+with CTE as (select 
+l.id,
+p.passenger_name,
+sum(p.weight_kg) over(partition by p.lift_id order by p.weight_kg rows between unbounded preceding and current row) as rolling_weight,
+l.capacity_kg
+from lift_passengers p
+join lifts l
+on p.lift_id = l.id)
+select id,
+group_concat(passenger_name, ',') as  passenger_list
+from cte where rolling_weight <= capacity_kg
+group by id
+
+
+--Q12
+with cte as (select *,
+sum(runs_scored) over(order by match_no rows between unbounded preceding and current row) as rolling_sum,
+sum(case when status = 'out' then 1 else 0 end) over(order by match_no rows between unbounded preceding and current row) as num_status_out
+from sachin)
+select x2.match_no,
+x1.batting_average
+from (select  1 as join_idx,
+rolling_sum * 1.0 / num_status_out as batting_average
+from cte where match_no = 10) x1 join
+(select 1 as join_idx,
+min(match_no) as match_no
+from cte where rolling_sum >= 500 ) x2
+on x1.join_idx = x2.join_idx
