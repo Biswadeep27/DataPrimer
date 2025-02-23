@@ -1,0 +1,13 @@
+kubectl
+container runtime interface (CRI) <- k8s
+
+=> to run a pod via kubectl and image and get into the stdout of the running pod:
+kubectl run -it <pod-name> --request-timeout=0 --restart=Never \
+--image=<docker-image-name> --overrides='{ "apiVersion": "v1", "spec": {"imagePullSecrets": [{"name": "secret-name"}]} }' \
+--env="ENV_GIT_REPO=ssh://git@repo-name.git" --env="ENV_GIT_BRANCH=branch-name" -n <namespace-name> -- /bin/bash
+
+=> to get into the stdout a running pod:
+kubectl exec <pod-name> -n <namespace-name> -- /bin/bash
+
+=> pod with yamls
+

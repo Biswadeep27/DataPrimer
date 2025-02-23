@@ -1,0 +1,34 @@
+Apache Arrow is One of such libraries in the data processing and data science space, A critical component of Apache Arrow is its 
+in-memory columnar format, a standardized, language-agnostic specification for representing structured, table-like datasets in-memory. 
+This data format has a rich data type system (included nested and user-defined data types) designed to support the needs of analytic database systems, 
+data frame libraries, and more,
+
+Arrow is used by open-source projects like Apache Parquet, Apache Spark, pandas, and many other big data tools.
+
+It provides the following functionality:
+=========================================
+1. In-memory computing.
+2. A standardized columnar storage format (Majorly Parquet).
+3. An IPC and RPC framework for data exchange between processes and nodes respectively.
+4. Cross-language interoperability.
+5. Apache Arrow enables to transfer of data precisely between Java Virtual Machine and executors of Python with zero serialization cost by 
+leveraging the Arrow columnar memory layout to fasten up the processing of string data.
+
+Arrow’s in-memory columnar data format is an out-of-the-box solution to these problems. 
+Systems that use or support Arrow can transfer data between them at little-to-no cost. 
+Moreover, they don’t need to implement custom connectors for every other system.
+
+Arrow uses memory-mapping of its files to load only as much data into memory as necessary and possible.
+
+Standardized Column Storage Format:
+====================================
+
+PySpark with PyArrow:
+=====================
+1. The Arrow Python bindings PyArrow” have first-class integration with NumPy, pandas, and built-in Python objects. 
+They are based on the C++ implementation of Arrow since version 2.3.
+2. 
+
+
+
+
